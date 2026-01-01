@@ -1,17 +1,6 @@
 """
 Task 4: Advanced Machine Learning Models
-Predict Weather, Time of Day, and Season using:
-- Random Forest
-- Support Vector Machine (SVM)
-- CNN (Convolutional Neural Network) - processes images directly
-ENCS5341 - Assignment 3
-
-FIXES INCLUDED:
-✅ max_batches_per_epoch can be None (train on ALL batches) without crashing
-✅ CNN evaluation uses FULL urls list + indices (no out-of-range bugs)
-✅ Confusion-matrix plotting adapts to number of models available
 """
-
 import os
 import warnings
 warnings.filterwarnings("ignore")
@@ -28,7 +17,6 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# PyTorch imports for CNN
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -41,16 +29,10 @@ from io import BytesIO
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Import feature extractor
 from image_feature_extractor import ImageFeatureExtractor
 
-
-# ----------------------------
 # Dataset
-# ----------------------------
 class ImageDataset(Dataset):
-    """Dataset class for loading images from URLs"""
-
     def __init__(self, urls, labels_dict, transform=None):
         self.urls = urls
         self.labels_dict = labels_dict
@@ -81,11 +63,7 @@ class ImageDataset(Dataset):
         # Return image and labels for all targets
         labels = {key: val[idx] for key, val in self.labels_dict.items()}
         return img, labels
-
-
-# ----------------------------
 # CNN Model
-# ----------------------------
 class CNNModel(nn.Module):
     """CNN model for multi-target classification"""
 
@@ -142,14 +120,7 @@ class CNNModel(nn.Module):
         for target_name in self.heads.keys():
             outputs[target_name] = self.heads[target_name](x)
         return outputs
-
-
-# ----------------------------
-# Advanced Models Wrapper
-# ----------------------------
 class AdvancedMLModels:
-    """Advanced ML models for multi-target classification"""
-
     def __init__(self):
         self.models = {
             'Random Forest': {},
@@ -168,13 +139,11 @@ class AdvancedMLModels:
                 f"Please re-extract features from cleaned_data.csv."
             )
 
-        # Remove Unknown rows (if your preprocessing uses Unknown)
         if remove_unknown:
             mask = ~(df[self.target_columns].isin(['Unknown']).any(axis=1))
             df = df[mask].reset_index(drop=True)
             features = features[mask]
 
-        # Remove rare classes
         for col in self.target_columns:
             value_counts = df[col].value_counts()
             rare_classes = value_counts[value_counts < min_samples_per_class].index.tolist()
@@ -184,7 +153,6 @@ class AdvancedMLModels:
                 features = features[mask]
 
         X = features
-
         y_dict = {}
         for col in self.target_columns:
             le = LabelEncoder()
@@ -251,11 +219,9 @@ class AdvancedMLModels:
         num_classes_dict = {col: len(self.label_encoders[col].classes_) for col in self.target_columns}
         model = CNNModel(num_classes_dict).to(device)
 
-        # Build train/test urls using indices from FULL urls list
         train_urls = [urls_full[i] for i in train_indices]
         test_urls = [urls_full[i] for i in test_indices]
 
-        # y_train_dict[col] aligned with train_idx length
         train_labels = {col: y_train_dict[col].tolist() for col in self.target_columns}
         test_labels = {col: y_test_dict[col].tolist() for col in self.target_columns}
 
@@ -294,7 +260,6 @@ class AdvancedMLModels:
                 running_loss += loss.item()
                 batches_seen += 1
 
-                # ✅ FIX: Only compare if not None
                 if max_batches_per_epoch is not None and batches_seen >= max_batches_per_epoch:
                     break
 
@@ -309,12 +274,10 @@ class AdvancedMLModels:
             if urls is None:
                 raise ValueError("urls are required for CNN prediction")
 
-            # If indices are provided and urls is FULL list -> subset by indices
-            # If urls is already a subset aligned with desired prediction length -> use directly
             if indices is not None and len(urls) > len(indices) and (max(indices) < len(urls)):
                 use_urls = [urls[i] for i in indices]
             else:
-                use_urls = urls  # already aligned
+                use_urls = urls
 
             predictions = {}
             model = self.models['CNN']
@@ -341,7 +304,6 @@ class AdvancedMLModels:
 
             return predictions
 
-        # Traditional models
         X_scaled = self.scaler.transform(X)
         predictions = {}
         for col in self.target_columns:
@@ -397,7 +359,6 @@ class AdvancedMLModels:
             print("[WARNING] No results to plot.")
             return
 
-        # Accuracy bar chart (targets = 3)
         fig, axes = plt.subplots(1, 3, figsize=(18, 5))
         fig.suptitle('Model Comparison - Accuracy Scores', fontsize=16, fontweight='bold')
 
@@ -419,7 +380,6 @@ class AdvancedMLModels:
         print(f"\n[OK] Saved comparison plot to {output_dir}/model_comparison.png")
         plt.close()
 
-        # Confusion matrices: number of columns matches number of models
         for col in self.target_columns:
             n_models = len(model_names)
             fig, axes = plt.subplots(1, n_models, figsize=(6 * n_models, 5))
@@ -485,7 +445,6 @@ class AdvancedMLModels:
                     f.write(report + "\n")
 
         print(f"[OK] Saved detailed reports to {report_file}")
-
 
 def main():
     print("=" * 70)
@@ -561,7 +520,7 @@ def main():
         epochs=15,
         batch_size=16,
         learning_rate=0.001,
-        max_batches_per_epoch=None  # ✅ train on ALL batches
+        max_batches_per_epoch=None
     )
 
     print("\n8. Evaluating all models...")
