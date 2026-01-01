@@ -1,13 +1,6 @@
 """
 Task 5: Performance Analysis [20 points]
-Analyze the behavior of the best-performing model:
-- Examine test examples with errors (misclassifications)
-- Look for patterns: certain labels difficult? imbalance? data issues?
-ENCS5341 - Assignment 3
-
-Best model (from Task 4 results): Random Forest on image embeddings
 """
-
 import os
 import warnings
 warnings.filterwarnings("ignore")
@@ -27,15 +20,9 @@ from sklearn.metrics import (
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-
-# -----------------------------
 # Helper functions
-# -----------------------------
 def ensure_dir(path: str):
     os.makedirs(path, exist_ok=True)
-
-
 def plot_confusion_matrix(cm, labels, title, save_path):
     plt.figure(figsize=(10, 8))
     sns.heatmap(
@@ -51,12 +38,7 @@ def plot_confusion_matrix(cm, labels, title, save_path):
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
-
-
 def most_confused_pairs(cm, labels, top_k=5):
-    """
-    Returns top confusing (actual -> predicted) pairs excluding diagonal.
-    """
     pairs = []
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
@@ -67,12 +49,7 @@ def most_confused_pairs(cm, labels, top_k=5):
                 pairs.append((labels[i], labels[j], int(count)))
     pairs.sort(key=lambda x: x[2], reverse=True)
     return pairs[:top_k]
-
-
 def per_class_recall(cm, labels):
-    """
-    Recall per class = TP / (TP + FN) = diagonal / row_sum
-    """
     recalls = []
     for i, lbl in enumerate(labels):
         row_sum = cm[i, :].sum()
@@ -82,11 +59,7 @@ def per_class_recall(cm, labels):
     df = pd.DataFrame(recalls, columns=["Class", "Recall", "TP", "Support"])
     df = df.sort_values("Recall", ascending=True).reset_index(drop=True)
     return df
-
-
-# -----------------------------
-# Main Task 5
-# -----------------------------
+    
 def main():
     print("=" * 70)
     print("TASK 5: PERFORMANCE ANALYSIS (Best Model Error Analysis)")
@@ -109,10 +82,8 @@ def main():
     print(f"   [OK] Samples: {len(df)}")
     print(f"   [OK] Features shape: {features.shape}")
 
-    # Targets (same as your Tasks 3/4)
     target_columns = ["Weather", "Time of Day", "Season"]
 
-    # Optional columns (depends on your dataset)
     url_col = None
     for candidate in ["Image URL", "ImageURL", "url", "URL"]:
         if candidate in df.columns:
@@ -195,19 +166,16 @@ def main():
         labels = label_encoders[col].classes_
         cm = confusion_matrix(y_true, y_pred)
 
-        # Save confusion matrix figure
         cm_path = os.path.join(output_dir, f"confusion_matrix_RF_{col.replace(' ', '_')}.png")
         plot_confusion_matrix(cm, labels, f"Random Forest Confusion Matrix - {col}", cm_path)
         print(f"[OK] Saved confusion matrix: {cm_path}")
 
-        # Save classification report (text)
         report = classification_report(y_true, y_pred, target_names=labels)
         rep_path = os.path.join(output_dir, f"classification_report_RF_{col.replace(' ', '_')}.txt")
         with open(rep_path, "w", encoding="utf-8") as f:
             f.write(report)
         print(f"[OK] Saved report: {rep_path}")
 
-        # Per-class recall table (helps answer “which labels are hard?”)
         recall_df = per_class_recall(cm, labels)
         recall_csv = os.path.join(output_dir, f"per_class_recall_RF_{col.replace(' ', '_')}.csv")
         recall_df.to_csv(recall_csv, index=False)
@@ -215,7 +183,6 @@ def main():
         print("\nLowest recall classes (hardest):")
         print(recall_df.head(5).to_string(index=False))
 
-        # Most confused pairs
         confused = most_confused_pairs(cm, labels, top_k=8)
         confused_path = os.path.join(output_dir, f"most_confused_pairs_RF_{col.replace(' ', '_')}.txt")
         with open(confused_path, "w", encoding="utf-8") as f:
@@ -228,7 +195,6 @@ def main():
         for a, p, c in confused[:5]:
             print(f"  {a} -> {p}: {c}")
 
-        # Misclassified examples table (for the report)
         wrong_mask = (y_true != y_pred)
         wrong_test_indices = test_idx[wrong_mask]
 
@@ -258,7 +224,7 @@ def main():
     summary_df.to_csv(summary_path, index=False)
 
     print("\n" + "=" * 70)
-    print("TASK 5 COMPLETE ✅")
+    print("TASK 5 COMPLETE ")
     print("=" * 70)
     print("\nSaved outputs in:", output_dir)
     print("\nSummary:")
