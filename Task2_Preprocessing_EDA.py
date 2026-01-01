@@ -1,12 +1,5 @@
 """
 Task 2: Data Preprocessing and Exploratory Data Analysis (EDA)
-ENCS5341 - Assignment 3
-
-Requirements:
-- Clean, preprocess, and organize dataset
-- Validate all columns against valid options
-- Validate image URLs work
-- Perform comprehensive EDA with quantitative summaries and visualizations
 """
 import pandas as pd
 import numpy as np
@@ -21,9 +14,7 @@ import os
 from collections import Counter
 warnings.filterwarnings('ignore')
 
-
 class Task2Preprocessor:
-    """Preprocessor for Task 2 with strict validation and comprehensive EDA"""
     
     def __init__(self):
         # Define valid options for each column
@@ -51,13 +42,11 @@ class Task2Preprocessor:
         self.logs = []
     
     def log(self, message, level='INFO'):
-        """Add log entry"""
         log_entry = f"[{level}] {message}"
         self.logs.append(log_entry)
         print(log_entry)
     
     def normalize_value(self, value):
-        """Normalize string values"""
         if pd.isna(value) or value is None:
             return ''
         value_str = str(value).strip()
@@ -66,7 +55,6 @@ class Task2Preprocessor:
         return value_str
     
     def is_valid_url_format(self, url):
-        """Check if URL has valid format"""
         try:
             result = urlparse(url)
             return all([result.scheme, result.netloc])
@@ -74,21 +62,6 @@ class Task2Preprocessor:
             return False
     
     def validate_image_url(self, url, timeout=5):
-        """
-        Validate that image URL is accessible and returns an image
-        
-        Parameters:
-        -----------
-        url : str
-            Image URL
-        timeout : int
-            Request timeout in seconds
-            
-        Returns:
-        --------
-        bool
-            True if URL is valid and accessible
-        """
         if not url or not self.is_valid_url_format(url):
             return False
         
@@ -115,7 +88,6 @@ class Task2Preprocessor:
             return False
     
     def validate_weather(self, value):
-        """Validate Weather column with fuzzy matching"""
         normalized = self.normalize_value(value)
         if not normalized:
             return None, 'Empty'
@@ -214,7 +186,6 @@ class Task2Preprocessor:
         return None, f'Invalid: {normalized}'
     
     def validate_mood(self, value):
-        """Validate Mood/Emotion column with fuzzy matching"""
         normalized = self.normalize_value(value)
         if not normalized:
             return None, 'Empty'
@@ -240,10 +211,9 @@ class Task2Preprocessor:
             'romantic': 'Romance',
             'melancholy': 'Melancholy',
             'sad': 'Melancholy',
-            'awe': 'Excitement'  # Map "Awe" to closest valid option
+            'awe': 'Excitement' 
         }
         
-        # Check for variations
         for key, valid_value in variations.items():
             if key == normalized_lower:
                 return valid_value, None
@@ -252,25 +222,10 @@ class Task2Preprocessor:
     
     def preprocess_data(self, input_file='data.csv', output_file='cleaned_data.csv', 
                        validate_urls=True, verbose=True):
-        """
-        Preprocess data with strict validation
-        
-        Parameters:
-        -----------
-        input_file : str
-            Input CSV file
-        output_file : str
-            Output CSV file
-        validate_urls : bool
-            Whether to validate image URLs
-        verbose : bool
-            Print progress
-        """
         self.log("=" * 70)
         self.log("TASK 2: DATA PREPROCESSING AND EDA")
         self.log("=" * 70)
         
-        # Load data
         self.log(f"\nLoading data from {input_file}...")
         try:
             df = pd.read_csv(input_file, encoding='utf-8')
@@ -283,7 +238,6 @@ class Task2Preprocessor:
         self.stats['original_rows'] = len(df)
         self.log(f"Loaded {len(df)} rows")
         
-        # Process each row
         self.log("\nProcessing and validating data...")
         cleaned_rows = []
         
@@ -310,7 +264,7 @@ class Task2Preprocessor:
             
             if removal_reason:
                 self.stats['removed_rows'] += 1
-                if verbose and idx < 10:  # Only log first 10 for brevity
+                if verbose and idx < 10: 
                     self.log(f"Row {idx+1}: Removed - {removal_reason}", 'WARNING')
                 continue
             
@@ -400,7 +354,6 @@ class Task2Preprocessor:
         return cleaned_df
     
     def generate_quantitative_summary(self, df, output_dir='eda_outputs'):
-        """Generate quantitative statistical summaries"""
         os.makedirs(output_dir, exist_ok=True)
         
         summary_file = os.path.join(output_dir, 'quantitative_summary.txt')
@@ -477,7 +430,6 @@ class Task2Preprocessor:
         self.log(f"[OK] Saved quantitative summary to {summary_file}")
     
     def generate_visualizations(self, df, output_dir='eda_outputs'):
-        """Generate comprehensive EDA visualizations"""
         os.makedirs(output_dir, exist_ok=True)
         
         self.log("\n" + "=" * 70)
@@ -641,7 +593,6 @@ class Task2Preprocessor:
         self.log("\n[OK] All visualizations generated!")
     
     def print_preprocessing_summary(self):
-        """Print preprocessing summary"""
         print("\n" + "=" * 70)
         print("PREPROCESSING SUMMARY")
         print("=" * 70)
@@ -667,29 +618,19 @@ class Task2Preprocessor:
 
 
 def main():
-    """Main execution function"""
     preprocessor = Task2Preprocessor()
     
-    # Preprocess data
-    # Note: Set validate_urls=False for faster processing (URLs will still be format-validated)
-    # Set validate_urls=True to actually check if URLs are accessible (slower but more thorough)
     cleaned_df = preprocessor.preprocess_data(
         input_file='data.csv',
         output_file='cleaned_data.csv',
-        validate_urls=False,  # Set to True to validate URLs (slower)
+        validate_urls=False, 
         verbose=True
     )
     
     if cleaned_df is not None and len(cleaned_df) > 0:
-        # Print summary
-        preprocessor.print_preprocessing_summary()
-        
-        # Generate quantitative summary
+        preprocessor.print_preprocessing_summary() 
         preprocessor.generate_quantitative_summary(cleaned_df)
-        
-        # Generate visualizations
-        preprocessor.generate_visualizations(cleaned_df)
-        
+        preprocessor.generate_visualizations(cleaned_df) 
         print("\n" + "=" * 70)
         print("TASK 2 COMPLETE!")
         print("=" * 70)
@@ -709,4 +650,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
