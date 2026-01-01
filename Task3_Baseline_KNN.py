@@ -1,8 +1,5 @@
 """
 Task 3: Baseline KNN Model
-Predict Weather, Time of Day, and Season using K-Nearest Neighbors
-Evaluates k=1 and k=3 as baseline models
-ENCS5341 - Assignment 3
 """
 import pandas as pd
 import numpy as np
@@ -20,21 +17,9 @@ warnings.filterwarnings('ignore')
 from image_feature_extractor import ImageFeatureExtractor
 
 class BaselineKNNModel:
-    """Baseline KNN model for multi-label classification"""
     
     def __init__(self, n_neighbors=1, metric='minkowski', p=2):
-        """
-        Initialize KNN model
-        
-        Parameters:
-        -----------
-        n_neighbors : int
-            Number of neighbors for KNN (k value)
-        metric : str
-            Distance metric (default: 'minkowski' for Euclidean)
-        p : int
-            Power parameter for Minkowski metric (p=2 for Euclidean)
-        """
+
         self.n_neighbors = n_neighbors
         self.metric = metric
         self.p = p
@@ -44,38 +29,16 @@ class BaselineKNNModel:
         self.target_columns = ['Weather', 'Time of Day', 'Season']
         
     def prepare_data(self, df, features, remove_unknown=True, min_samples_per_class=3):
-        """
-        Prepare data for training
-        
-        Parameters:
-        -----------
-        df : pd.DataFrame
-            DataFrame with target labels
-        features : np.ndarray
-            Image features
-        remove_unknown : bool
-            Remove samples with 'Unknown' labels
-        min_samples_per_class : int
-            Minimum samples per class to keep the class
-            
-        Returns:
-        --------
-        X, y_dict : tuple
-            Features and target labels dictionary
-        """
-        # Ensure features and dataframe have the same number of rows
+
         if len(features) != len(df):
             raise ValueError(f"Feature array size ({len(features)}) doesn't match dataframe size ({len(df)}). "
                            f"Please re-extract features from cleaned_data.csv.")
-        
-        # Filter out rows with 'Unknown' in any target if requested
-        # Note: cleaned_data.csv from Task2 has no 'Unknown' values, so this won't remove any rows
+
         if remove_unknown:
             mask = ~(df[self.target_columns].isin(['Unknown']).any(axis=1))
             df = df[mask].reset_index(drop=True)
             features = features[mask]
         
-        # Filter out classes with too few samples
         for col in self.target_columns:
             value_counts = df[col].value_counts()
             rare_classes = value_counts[value_counts < min_samples_per_class].index.tolist()
@@ -96,47 +59,23 @@ class BaselineKNNModel:
         return X, y_dict
     
     def train(self, X_train, y_train_dict):
-        """
-        Train KNN models for each target
-        
-        Parameters:
-        -----------
-        X_train : np.ndarray
-            Training features
-        y_train_dict : dict
-            Dictionary of training labels for each target
-        """
-        # Scale features
+
         X_train_scaled = self.scaler.fit_transform(X_train)
         
-        # Train separate KNN for each target
         for col in self.target_columns:
             print(f"\nTraining KNN (k={self.n_neighbors}) for {col}...")
-            # Use uniform weights for baseline (as per assignment requirement)
             knn = KNeighborsClassifier(
                 n_neighbors=self.n_neighbors,
-                weights='uniform',  # Uniform weights for baseline
+                weights='uniform', 
                 metric=self.metric,
-                p=self.p  # Euclidean distance (p=2)
+                p=self.p 
             )
             knn.fit(X_train_scaled, y_train_dict[col])
             self.models[col] = knn
             print(f"[OK] Trained KNN (k={self.n_neighbors}) for {col}")
     
     def predict(self, X):
-        """
-        Predict labels for all targets
-        
-        Parameters:
-        -----------
-        X : np.ndarray
-            Features
-            
-        Returns:
-        --------
-        dict
-            Predictions for each target
-        """
+
         X_scaled = self.scaler.transform(X)
         predictions = {}
         
@@ -148,21 +87,7 @@ class BaselineKNNModel:
         return predictions
     
     def evaluate(self, X_test, y_test_dict):
-        """
-        Evaluate model performance
-        
-        Parameters:
-        -----------
-        X_test : np.ndarray
-            Test features
-        y_test_dict : dict
-            Test labels dictionary
-            
-        Returns:
-        --------
-        dict
-            Evaluation metrics
-        """
+
         predictions = self.predict(X_test)
         results = {}
         
@@ -185,7 +110,6 @@ class BaselineKNNModel:
         return results
     
     def plot_confusion_matrices(self, y_test_dict, results, output_dir='task3_outputs', k_value=1):
-        """Plot confusion matrices for each target"""
         import os
         os.makedirs(output_dir, exist_ok=True)
         
@@ -194,9 +118,7 @@ class BaselineKNNModel:
         
         for idx, col in enumerate(self.target_columns):
             y_true = y_test_dict[col]
-            # Extract predictions from results dictionary
             predictions = results[col]['predictions']
-            # Ensure predictions is a numpy array
             if not isinstance(predictions, np.ndarray):
                 predictions = np.array(predictions)
             y_pred_encoded = self.label_encoders[col].transform(predictions)
@@ -219,7 +141,6 @@ class BaselineKNNModel:
         plt.close()
     
     def compare_k_values(self, k1_results, k3_results, output_dir='task3_outputs'):
-        """Compare performance of k=1 vs k=3"""
         import os
         os.makedirs(output_dir, exist_ok=True)
         
@@ -246,7 +167,6 @@ class BaselineKNNModel:
             axes[idx].grid(axis='y', alpha=0.3)
             axes[idx].set_ylim([0, 1])
             
-            # Add value labels
             axes[idx].text(x[0] - width/2, k1_acc + 0.02, f'{k1_acc:.3f}', 
                           ha='center', va='bottom', fontsize=9)
             axes[idx].text(x[0] + width/2, k3_acc + 0.02, f'{k3_acc:.3f}', 
@@ -263,20 +183,17 @@ class BaselineKNNModel:
 
 
 def main():
-    """Main execution function"""
     print("=" * 70)
     print("TASK 3: BASELINE KNN MODEL")
     print("Predicting: Weather, Time of Day, Season")
     print("Evaluating k=1 and k=3 as baseline models")
     print("Distance Metric: Euclidean (Minkowski with p=2)")
     print("=" * 70)
-    
-    # Load data
+
     print("\n1. Loading cleaned data...")
     df = pd.read_csv('cleaned_data.csv')
     print(f"   [OK] Loaded {len(df)} samples")
     
-    # Load or extract features
     print("\n2. Loading/extracting image features...")
     features = None
     try:
@@ -284,7 +201,6 @@ def main():
         print(f"   [OK] Loaded features from image_features.npy")
         print(f"   Feature shape: {loaded_features.shape}")
         
-        # Check if feature size matches dataframe size
         if loaded_features.shape[0] == len(df):
             features = loaded_features
             print(f"   [OK] Feature size matches dataframe size ({len(df)} rows)")
@@ -307,14 +223,11 @@ def main():
     if features is None:
         raise ValueError("Failed to load or extract features")
     
-    # Prepare data (shared for both models)
     print("\n3. Preparing data...")
-    # Use a temporary model to prepare data
     temp_model = BaselineKNNModel(n_neighbors=1)
     X, y_dict = temp_model.prepare_data(df, features, remove_unknown=True, min_samples_per_class=3)
     print(f"   [OK] Prepared {len(X)} samples after filtering")
     
-    # Split data
     print("\n4. Splitting data into train/test sets...")
     indices = np.arange(len(X))
     train_idx, test_idx = train_test_split(indices, test_size=0.2, random_state=42)
@@ -331,12 +244,8 @@ def main():
     print(f"   [OK] Train set: {len(X_train)} samples")
     print(f"   [OK] Test set: {len(X_test)} samples")
     
-    # Store label encoders for reuse
     label_encoders = temp_model.label_encoders
-    
-    # ========================================================================
     # EVALUATE K=1 BASELINE
-    # ========================================================================
     print("\n" + "=" * 70)
     print("EVALUATING BASELINE KNN WITH k=1")
     print("=" * 70)
@@ -350,7 +259,6 @@ def main():
     print("\n6. Evaluating k=1 model performance...")
     results_k1 = model_k1.evaluate(X_test, y_test_dict)
     
-    # Cross-validation for k=1
     print("\n7. Performing cross-validation for k=1...")
     X_scaled_k1 = model_k1.scaler.fit_transform(X_train)
     cv_scores_k1 = {}
@@ -361,9 +269,7 @@ def main():
         print(f"\n{col} (k=1) - Cross-validation scores: {cv_scores}")
         print(f"{col} (k=1) - Mean CV accuracy: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
     
-    # ========================================================================
     # EVALUATE K=3 BASELINE
-    # ========================================================================
     print("\n" + "=" * 70)
     print("EVALUATING BASELINE KNN WITH k=3")
     print("=" * 70)
@@ -377,7 +283,6 @@ def main():
     print("\n9. Evaluating k=3 model performance...")
     results_k3 = model_k3.evaluate(X_test, y_test_dict)
     
-    # Cross-validation for k=3
     print("\n10. Performing cross-validation for k=3...")
     X_scaled_k3 = model_k3.scaler.fit_transform(X_train)
     cv_scores_k3 = {}
@@ -388,9 +293,7 @@ def main():
         print(f"\n{col} (k=3) - Cross-validation scores: {cv_scores}")
         print(f"{col} (k=3) - Mean CV accuracy: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
     
-    # ========================================================================
     # DETAILED REPORTS
-    # ========================================================================
     print("\n" + "=" * 70)
     print("DETAILED CLASSIFICATION REPORTS")
     print("=" * 70)
@@ -415,17 +318,13 @@ def main():
         print(classification_report(y_true, y_pred_encoded, 
                                    target_names=model_k3.label_encoders[col].classes_))
     
-    # ========================================================================
     # VISUALIZATIONS
-    # ========================================================================
     print("\n13. Generating visualizations...")
     model_k1.plot_confusion_matrices(y_test_dict, results_k1, k_value=1)
     model_k3.plot_confusion_matrices(y_test_dict, results_k3, k_value=3)
     model_k1.compare_k_values(results_k1, results_k3)
     
-    # ========================================================================
     # SUMMARY COMPARISON
-    # ========================================================================
     print("\n" + "=" * 70)
     print("TASK 3 COMPLETE - BASELINE KNN COMPARISON")
     print("=" * 70)
@@ -463,4 +362,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
