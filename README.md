@@ -1,6 +1,6 @@
 # Travel Destination ML Analysis
 
-A full machine learning pipeline applied to a travel destination image dataset. The project covers data preprocessing, exploratory data analysis, baseline KNN classification, advanced models (Random Forest, SVM, CNN), and deep error analysis. Built for ENCS5341 at Birzeit University.
+A full machine learning pipeline applied to a travel destination image dataset. The project covers data preprocessing, exploratory data analysis, baseline KNN classification, advanced models (Random Forest, SVM, CNN), and deep error analysis. 
 
 ---
 
